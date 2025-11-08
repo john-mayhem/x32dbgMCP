@@ -12,13 +12,18 @@
 #include <algorithm>
 #include <iomanip>
 
-// Include all modular handlers
-#include "mcp_common.h"
-#include "mcp_handlers_pattern.h"
-#include "mcp_handlers_annotation.h"
-#include "mcp_handlers_stack.h"
-#include "mcp_handlers_function.h"
-#include "mcp_handlers_misc.h"
+// x64dbg SDK
+#include "pluginsdk/bridgemain.h"
+#include "pluginsdk/_plugins.h"
+#include "pluginsdk/_scriptapi_module.h"
+#include "pluginsdk/_scriptapi_memory.h"
+#include "pluginsdk/_scriptapi_register.h"
+#include "pluginsdk/_scriptapi_debug.h"
+#include "pluginsdk/_scriptapi_assembler.h"
+#include "pluginsdk/_scriptapi_stack.h"
+#include "pluginsdk/_scriptapi_pattern.h"
+#include "pluginsdk/_scriptapi_flag.h"
+#include "pluginsdk/_scriptapi_misc.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -32,7 +37,7 @@
 
 // Plugin info
 #define PLUGIN_NAME "x32dbg MCP Server"
-#define PLUGIN_VERSION 3
+#define PLUGIN_VERSION 2
 #define DEFAULT_PORT 8888
 #define MAX_REQUEST_SIZE 16384
 
@@ -46,7 +51,33 @@ std::mutex g_mutex;
 
 // Forward declarations
 DWORD WINAPI ServerThread(LPVOID lpParam);
+void SendResponse(SOCKET client, int code, const std::string& contentType, const std::string& body);
 std::string ParseRegister(const std::string& name, Script::Register::RegisterEnum& reg);
+
+//=============================================================================
+// JSON Helper Functions
+//=============================================================================
+
+std::string JsonEscape(const std::string& str) {
+    std::string result;
+    for (char c : str) {
+        switch (c) {
+            case '"': result += "\\\""; break;
+            case '\\': result += "\\\\"; break;
+            case '\n': result += "\\n"; break;
+            case '\r': result += "\\r"; break;
+            case '\t': result += "\\t"; break;
+            default: result += c;
+        }
+    }
+    return result;
+}
+
+std::string ToHex(duint value) {
+    std::ostringstream ss;
+    ss << "0x" << std::hex << value;
+    return ss.str();
+}
 
 //=============================================================================
 // Plugin Initialization
@@ -104,8 +135,24 @@ extern "C" __declspec(dllexport) void plugsetup(PLUG_SETUPSTRUCT* setupStruct) {
 }
 
 //=============================================================================
-// HTTP Parsing Utilities
+// HTTP Server
 //=============================================================================
+
+void SendResponse(SOCKET client, int code, const std::string& contentType, const std::string& body) {
+    std::ostringstream response;
+    std::string statusText = (code == 200) ? "OK" : (code == 400) ? "Bad Request" :
+                            (code == 404) ? "Not Found" : "Internal Server Error";
+
+    response << "HTTP/1.1 " << code << " " << statusText << "\r\n";
+    response << "Content-Type: " << contentType << "\r\n";
+    response << "Content-Length: " << body.length() << "\r\n";
+    response << "Access-Control-Allow-Origin: *\r\n";
+    response << "Connection: close\r\n\r\n";
+    response << body;
+
+    std::string resp = response.str();
+    send(client, resp.c_str(), (int)resp.length(), 0);
+}
 
 std::string UrlDecode(const std::string& str) {
     std::string result;
@@ -152,7 +199,7 @@ std::unordered_map<std::string, std::string> ParseQuery(const std::string& query
 }
 
 //=============================================================================
-// Register Parsing (kept from original)
+// Register Parsing
 //=============================================================================
 
 std::string ParseRegister(const std::string& name, Script::Register::RegisterEnum& reg) {
@@ -193,7 +240,7 @@ std::string ParseRegister(const std::string& name, Script::Register::RegisterEnu
 }
 
 //=============================================================================
-// API Request Router
+// API Endpoints
 //=============================================================================
 
 void HandleRequest(SOCKET client, const std::string& method, const std::string& path,
@@ -203,15 +250,16 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
     try {
         std::ostringstream response;
 
-        // ===== Core Status & Control =====
+        // Status endpoints
         if (path == "/status") {
             response << "{\"version\":" << PLUGIN_VERSION
                     << ",\"arch\":\"" << ARCH_NAME << "\""
-                    << ",\"debugging\":" << BoolToJson(DbgIsDebugging())
-                    << ",\"running\":" << BoolToJson(DbgIsRunning())
+                    << ",\"debugging\":" << (DbgIsDebugging() ? "true" : "false")
+                    << ",\"running\":" << (DbgIsRunning() ? "true" : "false")
                     << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
+        // Command execution
         else if (path == "/cmd") {
             auto it = params.find("cmd");
             if (it == params.end()) {
@@ -220,12 +268,11 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             }
 
             bool success = DbgCmdExecDirect(it->second.c_str());
-            response << "{\"success\":" << BoolToJson(success)
+            response << "{\"success\":" << (success ? "true" : "false")
                     << ",\"command\":\"" << JsonEscape(it->second) << "\"}";
             SendResponse(client, 200, "application/json", response.str());
         }
-
-        // ===== Register Operations =====
+        // Register operations
         else if (path == "/register/get") {
             auto it = params.find("name");
             if (it == params.end()) {
@@ -262,11 +309,10 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             duint value = std::stoull(valueIt->second, nullptr, 0);
             bool success = Script::Register::Set(reg, value);
 
-            response << "{\"success\":" << BoolToJson(success) << "}";
+            response << "{\"success\":" << (success ? "true" : "false") << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
-
-        // ===== Memory Operations =====
+        // Memory operations
         else if (path == "/memory/read") {
             auto addrIt = params.find("addr");
             auto sizeIt = params.find("size");
@@ -319,23 +365,11 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             duint bytesWritten = 0;
             bool success = Script::Memory::Write(addr, buffer.data(), buffer.size(), &bytesWritten);
 
-            response << "{\"success\":" << BoolToJson(success)
+            response << "{\"success\":" << (success ? "true" : "false")
                     << ",\"bytes_written\":" << bytesWritten << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
-
-        // ===== Pattern/Search Operations =====
-        else if (path == "/pattern/find_mem") {
-            MCPHandlers::Pattern::HandleFindMem(client, params);
-        }
-        else if (path == "/pattern/search_replace_mem") {
-            MCPHandlers::Pattern::HandleSearchReplaceMem(client, params);
-        }
-        else if (path == "/memory/search") {
-            MCPHandlers::Pattern::HandleMemorySearch(client, params);
-        }
-
-        // ===== Debug Control =====
+        // Debug control
         else if (path == "/debug/run") {
             Script::Debug::Run();
             SendResponse(client, 200, "application/json", "{\"success\":true}");
@@ -356,8 +390,7 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             Script::Debug::StepOut();
             SendResponse(client, 200, "application/json", "{\"success\":true}");
         }
-
-        // ===== Breakpoint Operations =====
+        // Breakpoints
         else if (path == "/breakpoint/set") {
             auto addrIt = params.find("addr");
             if (addrIt == params.end()) {
@@ -368,7 +401,7 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             duint addr = std::stoull(addrIt->second, nullptr, 0);
             bool success = Script::Debug::SetBreakpoint(addr);
 
-            response << "{\"success\":" << BoolToJson(success) << "}";
+            response << "{\"success\":" << (success ? "true" : "false") << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
         else if (path == "/breakpoint/delete") {
@@ -381,11 +414,10 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
             duint addr = std::stoull(addrIt->second, nullptr, 0);
             bool success = Script::Debug::DeleteBreakpoint(addr);
 
-            response << "{\"success\":" << BoolToJson(success) << "}";
+            response << "{\"success\":" << (success ? "true" : "false") << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
-
-        // ===== Disassembly & Modules =====
+        // Disassembly
         else if (path == "/disasm") {
             auto addrIt = params.find("addr");
             if (addrIt == params.end()) {
@@ -402,6 +434,7 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
                     << ",\"size\":" << instr.instr_size << "}";
             SendResponse(client, 200, "application/json", response.str());
         }
+        // Module list
         else if (path == "/modules") {
             ListInfo moduleList;
             if (!Script::Module::GetList(&moduleList)) {
@@ -424,87 +457,6 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
 
             SendResponse(client, 200, "application/json", response.str());
         }
-
-        // ===== Symbol/Label/Comment Operations =====
-        else if (path == "/symbols/list") {
-            MCPHandlers::Annotation::HandleSymbolsList(client, params);
-        }
-        else if (path == "/label/set") {
-            MCPHandlers::Annotation::HandleLabelSet(client, params);
-        }
-        else if (path == "/label/get") {
-            MCPHandlers::Annotation::HandleLabelGet(client, params);
-        }
-        else if (path == "/label/delete") {
-            MCPHandlers::Annotation::HandleLabelDelete(client, params);
-        }
-        else if (path == "/label/from_string") {
-            MCPHandlers::Annotation::HandleLabelFromString(client, params);
-        }
-        else if (path == "/label/list") {
-            MCPHandlers::Annotation::HandleLabelList(client, params);
-        }
-        else if (path == "/comment/set") {
-            MCPHandlers::Annotation::HandleCommentSet(client, params);
-        }
-        else if (path == "/comment/get") {
-            MCPHandlers::Annotation::HandleCommentGet(client, params);
-        }
-        else if (path == "/comment/delete") {
-            MCPHandlers::Annotation::HandleCommentDelete(client, params);
-        }
-        else if (path == "/comment/list") {
-            MCPHandlers::Annotation::HandleCommentList(client, params);
-        }
-
-        // ===== Stack Operations =====
-        else if (path == "/stack/push") {
-            MCPHandlers::Stack::HandleStackPush(client, params);
-        }
-        else if (path == "/stack/pop") {
-            MCPHandlers::Stack::HandleStackPop(client, params);
-        }
-        else if (path == "/stack/peek") {
-            MCPHandlers::Stack::HandleStackPeek(client, params);
-        }
-
-        // ===== Function & Bookmark Operations =====
-        else if (path == "/function/add") {
-            MCPHandlers::Function::HandleFunctionAdd(client, params);
-        }
-        else if (path == "/function/get") {
-            MCPHandlers::Function::HandleFunctionGet(client, params);
-        }
-        else if (path == "/function/delete") {
-            MCPHandlers::Function::HandleFunctionDelete(client, params);
-        }
-        else if (path == "/function/list") {
-            MCPHandlers::Function::HandleFunctionList(client, params);
-        }
-        else if (path == "/bookmark/set") {
-            MCPHandlers::Function::HandleBookmarkSet(client, params);
-        }
-        else if (path == "/bookmark/get") {
-            MCPHandlers::Function::HandleBookmarkGet(client, params);
-        }
-        else if (path == "/bookmark/delete") {
-            MCPHandlers::Function::HandleBookmarkDelete(client, params);
-        }
-        else if (path == "/bookmark/list") {
-            MCPHandlers::Function::HandleBookmarkList(client, params);
-        }
-
-        // ===== Misc Utility Operations =====
-        else if (path == "/misc/parse_expression") {
-            MCPHandlers::Misc::HandleParseExpression(client, params);
-        }
-        else if (path == "/misc/resolve_label") {
-            MCPHandlers::Misc::HandleResolveLabel(client, params);
-        }
-        else if (path == "/misc/get_proc_address") {
-            MCPHandlers::Misc::HandleGetProcAddress(client, params);
-        }
-
         else {
             SendResponse(client, 404, "text/plain", "Endpoint not found");
         }
