@@ -275,8 +275,7 @@ x64dbgMCP/
 ├── build.bat              # One-click build script
 ├── mcp_server.py          # Python MCP server (950+ lines, 48 tools)
 ├── src/
-│   ├── MCPx64dbg.cpp      # C++ plugin main file (modular, 650+ lines)
-│   └── MCPx64dbg_old.cpp  # Original version (backup)
+│   └── MCPx64dbg.cpp      # C++ plugin main file (modular, 650+ lines)
 ├── include/               # Modular handler headers (8 files)
 │   ├── mcp_common.h       # Common utilities and helpers
 │   ├── mcp_handlers_pattern.h      # Pattern/memory search
@@ -292,6 +291,7 @@ x64dbgMCP/
 │   └── MCPx64dbg.dp32     # Compiled plugin
 ├── CMakeLists.txt         # Build configuration
 ├── API-REFERENCE.md       # Complete API documentation
+├── MCPx64dbg_old.cpp.backup # Original version (backup)
 └── README.md              # This file
 ```
 
