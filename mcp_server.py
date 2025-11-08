@@ -378,6 +378,478 @@ def analyze_current_location() -> Dict[str, Any]:
         return {"error": str(e)}
 
 #=============================================================================
+# MCP Tools - Pattern/Memory Search Operations
+#=============================================================================
+
+@mcp.tool()
+def find_pattern_in_memory(start_addr: str, size: int, pattern: str) -> Dict[str, Any]:
+    """Search for a byte pattern in memory
+
+    Args:
+        start_addr: Starting address in hex format (e.g., "0x401000")
+        size: Size of memory region to search
+        pattern: Byte pattern to find (e.g., "48 8B 05 ?? ?? ?? ??")
+
+    Returns:
+        Dictionary with found address or error
+    """
+    try:
+        return api_request("/pattern/find_mem", {
+            "start": start_addr,
+            "size": str(size),
+            "pattern": pattern
+        })
+    except DebuggerError as e:
+        return {"found": False, "error": str(e)}
+
+@mcp.tool()
+def search_and_replace_pattern(start_addr: str, size: int, search_pattern: str, replace_pattern: str) -> Dict[str, bool]:
+    """Search for a pattern and replace it with another pattern
+
+    Args:
+        start_addr: Starting address in hex format
+        size: Size of memory region to search
+        search_pattern: Pattern to search for
+        replace_pattern: Pattern to replace with
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/pattern/search_replace_mem", {
+            "start": start_addr,
+            "size": str(size),
+            "search": search_pattern,
+            "replace": replace_pattern
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def memory_search(start_addr: str, size: int, pattern: str, max_results: int = 100) -> Dict[str, Any]:
+    """Search for all occurrences of a pattern in memory
+
+    Args:
+        start_addr: Starting address in hex format
+        size: Size of memory region to search
+        pattern: Byte pattern to find
+        max_results: Maximum number of results to return (default: 100)
+
+    Returns:
+        Dictionary with count and list of addresses found
+    """
+    try:
+        return api_request("/memory/search", {
+            "start": start_addr,
+            "size": str(size),
+            "pattern": pattern,
+            "max": str(max_results)
+        })
+    except DebuggerError as e:
+        return {"count": 0, "results": [], "error": str(e)}
+
+#=============================================================================
+# MCP Tools - Symbol Operations
+#=============================================================================
+
+@mcp.tool()
+def get_symbols() -> List[Dict[str, Any]]:
+    """Get all symbols (functions, imports, exports) from loaded modules
+
+    Returns:
+        List of dictionaries containing symbol information
+    """
+    try:
+        symbols = api_request("/symbols/list")
+        return symbols if isinstance(symbols, list) else []
+    except DebuggerError as e:
+        return [{"error": str(e)}]
+
+#=============================================================================
+# MCP Tools - Label Operations
+#=============================================================================
+
+@mcp.tool()
+def set_label(addr: str, text: str, manual: bool = True) -> Dict[str, bool]:
+    """Set a label at specified address
+
+    Args:
+        addr: Memory address in hex format (e.g., "0x401000")
+        text: Label text
+        manual: Whether this is a manual label (default: True)
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/label/set", {
+            "addr": addr,
+            "text": text,
+            "manual": "true" if manual else "false"
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_label(addr: str) -> Dict[str, Any]:
+    """Get label text at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary with label text
+    """
+    try:
+        return api_request("/label/get", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def delete_label(addr: str) -> Dict[str, bool]:
+    """Delete label at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/label/delete", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def resolve_label(label: str) -> Dict[str, Any]:
+    """Resolve a label name to its memory address
+
+    Args:
+        label: Label name to resolve
+
+    Returns:
+        Dictionary with resolved address
+    """
+    try:
+        return api_request("/label/from_string", {"label": label})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_all_labels() -> List[Dict[str, str]]:
+    """Get all labels in the debugged process
+
+    Returns:
+        List of dictionaries containing label information
+    """
+    try:
+        labels = api_request("/label/list")
+        return labels if isinstance(labels, list) else []
+    except DebuggerError as e:
+        return [{"error": str(e)}]
+
+#=============================================================================
+# MCP Tools - Comment Operations
+#=============================================================================
+
+@mcp.tool()
+def set_comment(addr: str, text: str, manual: bool = True) -> Dict[str, bool]:
+    """Set a comment at specified address
+
+    Args:
+        addr: Memory address in hex format
+        text: Comment text
+        manual: Whether this is a manual comment (default: True)
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/comment/set", {
+            "addr": addr,
+            "text": text,
+            "manual": "true" if manual else "false"
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_comment(addr: str) -> Dict[str, Any]:
+    """Get comment at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary with comment text
+    """
+    try:
+        return api_request("/comment/get", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def delete_comment(addr: str) -> Dict[str, bool]:
+    """Delete comment at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/comment/delete", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_all_comments() -> List[Dict[str, str]]:
+    """Get all comments in the debugged process
+
+    Returns:
+        List of dictionaries containing comment information
+    """
+    try:
+        comments = api_request("/comment/list")
+        return comments if isinstance(comments, list) else []
+    except DebuggerError as e:
+        return [{"error": str(e)}]
+
+#=============================================================================
+# MCP Tools - Stack Operations
+#=============================================================================
+
+@mcp.tool()
+def stack_push(value: str) -> Dict[str, Any]:
+    """Push a value onto the stack
+
+    Args:
+        value: Value to push in hex format (e.g., "0x1000")
+
+    Returns:
+        Dictionary with previous stack top value
+    """
+    try:
+        return api_request("/stack/push", {"value": value})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def stack_pop() -> Dict[str, Any]:
+    """Pop a value from the stack
+
+    Returns:
+        Dictionary with popped value
+    """
+    try:
+        return api_request("/stack/pop")
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def stack_peek(offset: int = 0) -> Dict[str, Any]:
+    """Peek at a value on the stack without removing it
+
+    Args:
+        offset: Stack offset (0 = top, 1 = next, etc.)
+
+    Returns:
+        Dictionary with peeked value
+    """
+    try:
+        return api_request("/stack/peek", {"offset": str(offset)})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+#=============================================================================
+# MCP Tools - Function Operations
+#=============================================================================
+
+@mcp.tool()
+def add_function(start_addr: str, end_addr: str, manual: bool = True) -> Dict[str, bool]:
+    """Define a function at specified address range
+
+    Args:
+        start_addr: Function start address in hex format
+        end_addr: Function end address in hex format
+        manual: Whether this is a manual function definition (default: True)
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/function/add", {
+            "start": start_addr,
+            "end": end_addr,
+            "manual": "true" if manual else "false"
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_function_info(addr: str) -> Dict[str, Any]:
+    """Get function information at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary with function start, end, and instruction count
+    """
+    try:
+        return api_request("/function/get", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def delete_function(addr: str) -> Dict[str, bool]:
+    """Delete function at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/function/delete", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_all_functions() -> List[Dict[str, Any]]:
+    """Get all defined functions in the debugged process
+
+    Returns:
+        List of dictionaries containing function information
+    """
+    try:
+        functions = api_request("/function/list")
+        return functions if isinstance(functions, list) else []
+    except DebuggerError as e:
+        return [{"error": str(e)}]
+
+#=============================================================================
+# MCP Tools - Bookmark Operations
+#=============================================================================
+
+@mcp.tool()
+def set_bookmark(addr: str, manual: bool = True) -> Dict[str, bool]:
+    """Set a bookmark at specified address
+
+    Args:
+        addr: Memory address in hex format
+        manual: Whether this is a manual bookmark (default: True)
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/bookmark/set", {
+            "addr": addr,
+            "manual": "true" if manual else "false"
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def check_bookmark(addr: str) -> Dict[str, bool]:
+    """Check if a bookmark exists at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary indicating if bookmark exists
+    """
+    try:
+        return api_request("/bookmark/get", {"addr": addr})
+    except DebuggerError as e:
+        return {"exists": False, "error": str(e)}
+
+@mcp.tool()
+def delete_bookmark(addr: str) -> Dict[str, bool]:
+    """Delete bookmark at specified address
+
+    Args:
+        addr: Memory address in hex format
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/bookmark/delete", {"addr": addr})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_all_bookmarks() -> List[Dict[str, str]]:
+    """Get all bookmarks in the debugged process
+
+    Returns:
+        List of dictionaries containing bookmark information
+    """
+    try:
+        bookmarks = api_request("/bookmark/list")
+        return bookmarks if isinstance(bookmarks, list) else []
+    except DebuggerError as e:
+        return [{"error": str(e)}]
+
+#=============================================================================
+# MCP Tools - Miscellaneous Utilities
+#=============================================================================
+
+@mcp.tool()
+def parse_expression(expression: str) -> Dict[str, Any]:
+    """Parse and evaluate an expression (registers, memory, labels, etc.)
+
+    Args:
+        expression: Expression to evaluate (e.g., "[esp+8]", "eax+10")
+
+    Returns:
+        Dictionary with evaluated value
+    """
+    try:
+        return api_request("/misc/parse_expression", {"expr": expression})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def resolve_api_address(module: str, api_name: str) -> Dict[str, Any]:
+    """Get the address of an API function in the debuggee
+
+    Args:
+        module: Module name (e.g., "kernel32.dll")
+        api_name: API function name (e.g., "GetProcAddress")
+
+    Returns:
+        Dictionary with API address in the debuggee
+    """
+    try:
+        return api_request("/misc/get_proc_address", {
+            "module": module,
+            "api": api_name
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def resolve_label_address(label: str) -> Dict[str, Any]:
+    """Resolve a label name to its address
+
+    Args:
+        label: Label name to resolve
+
+    Returns:
+        Dictionary with resolved address
+    """
+    try:
+        return api_request("/misc/resolve_label", {"label": label})
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+#=============================================================================
 # Main Entry Point
 #=============================================================================
 
