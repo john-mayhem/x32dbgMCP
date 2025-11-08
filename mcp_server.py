@@ -170,7 +170,7 @@ def get_register(name: str) -> Dict[str, Any]:
         return {"error": str(e), "register": name}
 
 @mcp.tool()
-def set_register(name: str, value: str) -> Dict[str, bool]:
+def set_register(name: str, value: str) -> Dict[str, Any]:
     """Set value of a CPU register
 
     Args:
@@ -230,7 +230,7 @@ def write_memory(addr: str, data: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def step_execution() -> Dict[str, bool]:
+def step_execution() -> Dict[str, Any]:
     """Step into the next instruction (single step)
 
     Returns:
@@ -242,7 +242,7 @@ def step_execution() -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def step_over() -> Dict[str, bool]:
+def step_over() -> Dict[str, Any]:
     """Step over the next instruction (skip calls)
 
     Returns:
@@ -254,7 +254,7 @@ def step_over() -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def step_out() -> Dict[str, bool]:
+def step_out() -> Dict[str, Any]:
     """Step out of current function (return to caller)
 
     Returns:
@@ -266,7 +266,7 @@ def step_out() -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def run_process() -> Dict[str, bool]:
+def run_process() -> Dict[str, Any]:
     """Resume execution of the debugged process
 
     Returns:
@@ -278,7 +278,7 @@ def run_process() -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def pause_process() -> Dict[str, bool]:
+def pause_process() -> Dict[str, Any]:
     """Pause execution of the debugged process
 
     Returns:
@@ -290,7 +290,7 @@ def pause_process() -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def set_breakpoint(addr: str) -> Dict[str, bool]:
+def set_breakpoint(addr: str) -> Dict[str, Any]:
     """Set a breakpoint at specified address
 
     Args:
@@ -305,7 +305,7 @@ def set_breakpoint(addr: str) -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def delete_breakpoint(addr: str) -> Dict[str, bool]:
+def delete_breakpoint(addr: str) -> Dict[str, Any]:
     """Delete a breakpoint at specified address
 
     Args:
@@ -403,7 +403,7 @@ def find_pattern_in_memory(start_addr: str, size: int, pattern: str) -> Dict[str
         return {"found": False, "error": str(e)}
 
 @mcp.tool()
-def search_and_replace_pattern(start_addr: str, size: int, search_pattern: str, replace_pattern: str) -> Dict[str, bool]:
+def search_and_replace_pattern(start_addr: str, size: int, search_pattern: str, replace_pattern: str) -> Dict[str, Any]:
     """Search for a pattern and replace it with another pattern
 
     Args:
@@ -470,7 +470,7 @@ def get_symbols() -> List[Dict[str, Any]]:
 #=============================================================================
 
 @mcp.tool()
-def set_label(addr: str, text: str, manual: bool = True) -> Dict[str, bool]:
+def set_label(addr: str, text: str, manual: bool = True) -> Dict[str, Any]:
     """Set a label at specified address
 
     Args:
@@ -506,7 +506,7 @@ def get_label(addr: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def delete_label(addr: str) -> Dict[str, bool]:
+def delete_label(addr: str) -> Dict[str, Any]:
     """Delete label at specified address
 
     Args:
@@ -553,7 +553,7 @@ def get_all_labels() -> List[Dict[str, str]]:
 #=============================================================================
 
 @mcp.tool()
-def set_comment(addr: str, text: str, manual: bool = True) -> Dict[str, bool]:
+def set_comment(addr: str, text: str, manual: bool = True) -> Dict[str, Any]:
     """Set a comment at specified address
 
     Args:
@@ -589,7 +589,7 @@ def get_comment(addr: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def delete_comment(addr: str) -> Dict[str, bool]:
+def delete_comment(addr: str) -> Dict[str, Any]:
     """Delete comment at specified address
 
     Args:
@@ -667,7 +667,7 @@ def stack_peek(offset: int = 0) -> Dict[str, Any]:
 #=============================================================================
 
 @mcp.tool()
-def add_function(start_addr: str, end_addr: str, manual: bool = True) -> Dict[str, bool]:
+def add_function(start_addr: str, end_addr: str, manual: bool = True) -> Dict[str, Any]:
     """Define a function at specified address range
 
     Args:
@@ -703,7 +703,7 @@ def get_function_info(addr: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def delete_function(addr: str) -> Dict[str, bool]:
+def delete_function(addr: str) -> Dict[str, Any]:
     """Delete function at specified address
 
     Args:
@@ -735,7 +735,7 @@ def get_all_functions() -> List[Dict[str, Any]]:
 #=============================================================================
 
 @mcp.tool()
-def set_bookmark(addr: str, manual: bool = True) -> Dict[str, bool]:
+def set_bookmark(addr: str, manual: bool = True) -> Dict[str, Any]:
     """Set a bookmark at specified address
 
     Args:
@@ -754,7 +754,7 @@ def set_bookmark(addr: str, manual: bool = True) -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def check_bookmark(addr: str) -> Dict[str, bool]:
+def check_bookmark(addr: str) -> Dict[str, Any]:
     """Check if a bookmark exists at specified address
 
     Args:
@@ -769,7 +769,7 @@ def check_bookmark(addr: str) -> Dict[str, bool]:
         return {"exists": False, "error": str(e)}
 
 @mcp.tool()
-def delete_bookmark(addr: str) -> Dict[str, bool]:
+def delete_bookmark(addr: str) -> Dict[str, Any]:
     """Delete bookmark at specified address
 
     Args:
@@ -872,7 +872,7 @@ def assemble_instruction(addr: str, instruction: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def assemble_and_patch(addr: str, instruction: str) -> Dict[str, bool]:
+def assemble_and_patch(addr: str, instruction: str) -> Dict[str, Any]:
     """Assemble an instruction and write it directly to memory
 
     Args:
@@ -910,7 +910,7 @@ def get_cpu_flag(flag: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 @mcp.tool()
-def set_cpu_flag(flag: str, value: bool) -> Dict[str, bool]:
+def set_cpu_flag(flag: str, value: bool) -> Dict[str, Any]:
     """Set the value of a CPU flag
 
     Args:
@@ -929,7 +929,7 @@ def set_cpu_flag(flag: str, value: bool) -> Dict[str, bool]:
         return {"success": False, "error": str(e)}
 
 @mcp.tool()
-def get_all_cpu_flags() -> Dict[str, bool]:
+def get_all_cpu_flags() -> Dict[str, Any]:
     """Get all CPU flags at once
 
     Returns:
