@@ -19,6 +19,8 @@
 #include "mcp_handlers_stack.h"
 #include "mcp_handlers_function.h"
 #include "mcp_handlers_misc.h"
+#include "mcp_handlers_assembler.h"
+#include "mcp_handlers_flags.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -503,6 +505,25 @@ void HandleRequest(SOCKET client, const std::string& method, const std::string& 
         }
         else if (path == "/misc/get_proc_address") {
             MCPHandlers::Misc::HandleGetProcAddress(client, params);
+        }
+
+        // ===== Assembler Operations =====
+        else if (path == "/assembler/assemble") {
+            MCPHandlers::Assembler::HandleAssemble(client, params);
+        }
+        else if (path == "/assembler/assemble_mem") {
+            MCPHandlers::Assembler::HandleAssembleMem(client, params);
+        }
+
+        // ===== CPU Flag Operations =====
+        else if (path == "/flag/get") {
+            MCPHandlers::Flags::HandleFlagGet(client, params);
+        }
+        else if (path == "/flag/set") {
+            MCPHandlers::Flags::HandleFlagSet(client, params);
+        }
+        else if (path == "/flags/get_all") {
+            MCPHandlers::Flags::HandleFlagsGetAll(client, params);
         }
 
         else {

@@ -2,11 +2,11 @@
 
 **Full-Featured Model Context Protocol (MCP) server for x32dbg debugger**
 
-Give Claude direct access to **43+ comprehensive x32dbg debugging capabilities** through natural language!
+Give Claude direct access to **48+ comprehensive x32dbg debugging capabilities** through natural language!
 
 ![Architecture](https://img.shields.io/badge/x32dbg-MCP%20Server-blue)
 ![Language](https://img.shields.io/badge/C++-Python-green)
-![Tools](https://img.shields.io/badge/tools-43+-brightgreen)
+![Tools](https://img.shields.io/badge/tools-48+-brightgreen)
 ![Status](https://img.shields.io/badge/status-stable-success)
 
 ---
@@ -156,7 +156,7 @@ Claude: [Uses get_modules, searches memory, sets breakpoints]
 
 ---
 
-## 🔧 Available Tools (43+)
+## 🔧 Available Tools (48+)
 
 > **📚 See [API-REFERENCE.md](API-REFERENCE.md) for complete API documentation**
 
@@ -184,6 +184,14 @@ Claude: [Uses get_modules, searches memory, sets breakpoints]
 
 ### Bookmark Operations (4)
 - `set_bookmark` / `check_bookmark` / `delete_bookmark` / `get_all_bookmarks`
+
+### Assembler Operations (2) 🆕
+- `assemble_instruction` - Assemble to bytecode
+- `assemble_and_patch` - Assemble and write to memory
+
+### CPU Flag Operations (3) 🆕
+- `get_cpu_flag` / `set_cpu_flag` - Read/write individual flags
+- `get_all_cpu_flags` - Get all flags at once (ZF, OF, CF, PF, SF, TF, AF, DF, IF)
 
 ### Miscellaneous Utilities (3)
 - `parse_expression` - Evaluate complex expressions
@@ -258,17 +266,19 @@ Claude Desktop/VSCode
 ```
 x64dbgMCP/
 ├── build.bat              # One-click build script
-├── mcp_server.py          # Python MCP server (860+ lines, 43+ tools)
+├── mcp_server.py          # Python MCP server (950+ lines, 48 tools)
 ├── src/
-│   ├── MCPx64dbg.cpp      # C++ plugin main file (modular, 600+ lines)
+│   ├── MCPx64dbg.cpp      # C++ plugin main file (modular, 650+ lines)
 │   └── MCPx64dbg_old.cpp  # Original version (backup)
-├── include/               # Modular handler headers
+├── include/               # Modular handler headers (8 files)
 │   ├── mcp_common.h       # Common utilities and helpers
 │   ├── mcp_handlers_pattern.h      # Pattern/memory search
 │   ├── mcp_handlers_annotation.h   # Symbols/labels/comments
 │   ├── mcp_handlers_stack.h        # Stack operations
 │   ├── mcp_handlers_function.h     # Functions/bookmarks
-│   └── mcp_handlers_misc.h         # Misc utilities
+│   ├── mcp_handlers_misc.h         # Misc utilities
+│   ├── mcp_handlers_assembler.h    # Assembler operations
+│   └── mcp_handlers_flags.h        # CPU flags
 ├── deps/
 │   └── pluginsdk/         # x64dbg SDK headers
 ├── build/
@@ -282,12 +292,14 @@ x64dbgMCP/
 
 ## 🎯 Features
 
-✅ **Full x64dbg SDK Integration** - 43+ tools covering all major x64dbg APIs
+✅ **Full x64dbg SDK Integration** - 48+ tools covering all major x64dbg APIs
 ✅ **Modular Architecture** - Clean, maintainable C++ with organized header files
 ✅ **Complete Debugging Toolkit** - Memory, registers, breakpoints, symbols, labels, comments
 ✅ **Advanced Pattern Search** - Find byte patterns, search and replace
 ✅ **Stack Operations** - Direct stack manipulation
 ✅ **Function Analysis** - Define, analyze, and manage functions
+✅ **Assembler Support** - Assemble instructions, patch memory on the fly
+✅ **CPU Flag Control** - Read/write all CPU flags (ZF, OF, CF, PF, SF, TF, AF, DF, IF)
 ✅ **JSON Responses** - Structured data for Claude
 ✅ **MCP Resources & Prompts** - Contextual information and guided workflows
 ✅ **Cross-Process** - No DLL injection needed
@@ -301,11 +313,13 @@ x64dbgMCP/
 This is a comprehensive full-featured implementation of x64dbgMCP with major improvements:
 
 **Version 3.0 (Current)**
-- ✨ **43+ MCP tools** (up from 16)
-- 🏗️ **Modular C++ architecture** with organized header files
-- 🔍 **Complete x64dbg SDK integration** - pattern search, symbols, labels, comments, stack, functions, bookmarks
+- ✨ **48+ MCP tools** (up from 16)
+- 🏗️ **Modular C++ architecture** with 8 organized header files
+- 🔍 **Complete x64dbg SDK integration** - pattern search, symbols, labels, comments, stack, functions, bookmarks, assembler, CPU flags
 - 📖 **Comprehensive API documentation**
 - 🎯 **Production-ready** with robust error handling
+- 🆕 **Assembler support** - assemble & patch on the fly
+- 🆕 **CPU flag control** - read/write all CPU flags
 
 **Version 2.0 (Previous)**
 - 63% code reduction in C++ plugin

@@ -848,6 +848,98 @@ def resolve_label_address(label: str) -> Dict[str, Any]:
         return api_request("/misc/resolve_label", {"label": label})
     except DebuggerError as e:
         return {"success": False, "error": str(e)}
+#=============================================================================
+# MCP Tools - Assembler Operations
+#=============================================================================
+
+@mcp.tool()
+def assemble_instruction(addr: str, instruction: str) -> Dict[str, Any]:
+    """Assemble an instruction to bytecode without writing to memory
+
+    Args:
+        addr: Address context for relative instructions (hex format)
+        instruction: Assembly instruction to assemble (e.g., "mov eax, ebx")
+
+    Returns:
+        Dictionary with assembled bytes
+    """
+    try:
+        return api_request("/assembler/assemble", {
+            "addr": addr,
+            "instruction": instruction
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def assemble_and_patch(addr: str, instruction: str) -> Dict[str, bool]:
+    """Assemble an instruction and write it directly to memory
+
+    Args:
+        addr: Memory address to write to (hex format)
+        instruction: Assembly instruction to assemble and write
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/assembler/assemble_mem", {
+            "addr": addr,
+            "instruction": instruction
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+#=============================================================================
+# MCP Tools - CPU Flag Operations
+#=============================================================================
+
+@mcp.tool()
+def get_cpu_flag(flag: str) -> Dict[str, Any]:
+    """Get the value of a CPU flag
+
+    Args:
+        flag: Flag name (ZF, OF, CF, PF, SF, TF, AF, DF, IF)
+
+    Returns:
+        Dictionary with flag name and value
+    """
+    try:
+        return api_request("/flag/get", {"flag": flag})
+    except DebuggerError as e:
+        return {"error": str(e)}
+
+@mcp.tool()
+def set_cpu_flag(flag: str, value: bool) -> Dict[str, bool]:
+    """Set the value of a CPU flag
+
+    Args:
+        flag: Flag name (ZF, OF, CF, PF, SF, TF, AF, DF, IF)
+        value: New flag value (True/False)
+
+    Returns:
+        Dictionary indicating success
+    """
+    try:
+        return api_request("/flag/set", {
+            "flag": flag,
+            "value": "true" if value else "false"
+        })
+    except DebuggerError as e:
+        return {"success": False, "error": str(e)}
+
+@mcp.tool()
+def get_all_cpu_flags() -> Dict[str, bool]:
+    """Get all CPU flags at once
+
+    Returns:
+        Dictionary with all CPU flags (ZF, OF, CF, PF, SF, TF, AF, DF, IF)
+    """
+    try:
+        return api_request("/flags/get_all")
+    except DebuggerError as e:
+        return {"error": str(e)}
+
 
 #=============================================================================
 # Main Entry Point
