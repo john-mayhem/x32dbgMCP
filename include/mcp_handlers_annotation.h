@@ -60,7 +60,7 @@ inline void HandleLabelSet(SOCKET client, const std::unordered_map<std::string, 
     }
 
     GetParamBool(params, "manual", manual);
-    bool success = Script::Label::Set(addr, text.c_str(), manual);
+    bool success = Script::Label::Set(addr, text.c_str(), manual, false); // false = not temporary
 
     std::ostringstream response;
     response << "{\"success\":" << BoolToJson(success) << "}";
