@@ -64,6 +64,13 @@ python mcp_server.py
 
 #### 4. Configure Your Claude App
 
+Console:
+
+```ps
+
+claude mcp add x32dbg python C:\Tools\mcp_server.py --transport stdio --env X64DBG_URL=http://127.0.0.1:8888
+```
+
 ⚠️ **IMPORTANT:** Claude Desktop and Claude Code (VSCode) use **different configuration files**!
 
 ##### Option A: Claude Desktop (Standalone App)
