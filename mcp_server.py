@@ -15,7 +15,7 @@ mcp = FastMCP("x32dbg")
 
 # Configuration
 X64DBG_URL = os.getenv("X64DBG_URL", "http://127.0.0.1:8888")
-REQUEST_TIMEOUT = 5
+REQUEST_TIMEOUT = int(os.getenv("X64DBG_TIMEOUT", "30"))  # Default 30s, configurable via env
 
 #=============================================================================
 # HTTP Communication Layer
