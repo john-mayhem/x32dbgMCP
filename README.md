@@ -85,7 +85,8 @@ Edit: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Appl
       "command": "python",
       "args": ["C:\\path\\to\\x64dbgMCP\\mcp_server.py"],
       "env": {
-        "X64DBG_URL": "http://127.0.0.1:8888"
+        "X64DBG_URL": "http://127.0.0.1:8888",
+        "X64DBG_TIMEOUT": "30"
       }
     }
   }
@@ -103,7 +104,8 @@ Create `.vscode/settings.json` in your workspace:
       "command": "python",
       "args": ["C:\\path\\to\\x64dbgMCP\\mcp_server.py"],
       "env": {
-        "X64DBG_URL": "http://127.0.0.1:8888"
+        "X64DBG_URL": "http://127.0.0.1:8888",
+        "X64DBG_TIMEOUT": "30"
       }
     }
   }
@@ -259,6 +261,34 @@ Claude Desktop/VSCode
 1. Ensure x32dbg is running with plugin loaded
 2. Test manually: `curl http://127.0.0.1:8888/status`
 3. Check X64DBG_URL environment variable
+
+### Request Timeout Errors
+
+If you see "Request timed out - is x32dbg running?" frequently:
+
+**Cause:** Some debugging operations (like `run`, `step_over`, setting breakpoints while running) can take longer than the default 30-second timeout, especially if the debugger needs to run to a distant breakpoint.
+
+**Solution:** Increase the timeout via environment variable:
+
+```json
+{
+  "claude.mcpServers": {
+    "x32dbg": {
+      "command": "python",
+      "args": ["C:\\path\\to\\x64dbgMCP\\mcp_server.py"],
+      "env": {
+        "X64DBG_URL": "http://127.0.0.1:8888",
+        "X64DBG_TIMEOUT": "60"
+      }
+    }
+  }
+}
+```
+
+Adjust the timeout value (in seconds) based on your needs:
+- Default: `30` seconds (general debugging)
+- Recommended: `60` seconds (complex analysis)
+- Long runs: `120+` seconds (waiting for rare events)
 
 ### Build Errors
 
